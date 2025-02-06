@@ -16,22 +16,21 @@
     },
 
     "ServerScriptService": {
-      "Server": {
-        "$path": "src/server"
-      }
+      "$path": "src/server",
+      "$ignoreUnknownInstances":true
     },
 
     "StarterGui": {
       "Interface": {
         "$path": "src/interface"
-      }
+      },
+      "$ignoreUnknownInstances":true
     },
 
     "StarterPlayer": {
       "StarterPlayerScripts": {
-        "Client": {
-          "$path": "src/client"
-        }
+        "$path": "src/client",
+        "$ignoreUnknownInstances":true 
       }
     },
 
