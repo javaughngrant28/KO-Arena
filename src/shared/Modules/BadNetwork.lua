@@ -28,19 +28,19 @@ Notes:
 ]]
 
 export type Server = {
-    On: (self: Server, eventName: string, callback: (player: Player, ...any) -> ()) -> (),
-    Fire: (self: Server, player: Player, eventName: string, ...any) -> (),
-    FireAll: (self: Server, eventName: string, ...any) -> (),
-    FireList: (self: Server, playerList: {Player},eventName: string, ...any) -> (),
-    Disconnect: (self: Server, eventName: string) -> (),
-    Destroy: (self: Server) -> (),
+	On: (self: Server, eventName: string, callback: (player: Player, ...any) -> ()) -> (),
+	Fire: (self: Server, player: Player, eventName: string, ...any) -> (),
+	FireAll: (self: Server, eventName: string, ...any) -> (),
+	FireList: (self: Server, playerList: {Player},eventName: string, ...any) -> (),
+	Disconnect: (self: Server, eventName: string) -> (),
+	Destroy: (self: Server) -> (),
 }
 
 export type Client = {
-    On: (self: Client, eventName: string, callback: (...any) -> ()) -> (),
-    Fire: (self: Client, eventName: string, ...any) -> (),
-    Disconnect: (self: Client, eventName: string) -> (),
-    Destroy: (self: Client) -> (),
+	On: (self: Client, eventName: string, callback: (...any) -> ()) -> (),
+	Fire: (self: Client, eventName: string, ...any) -> (),
+	Disconnect: (self: Client, eventName: string) -> (),
+	Destroy: (self: Client) -> (),
 }
 
 export type BadNetwork = Server | Client
@@ -52,7 +52,7 @@ type ClientCallBack = (...any) -> ()
 local RunService = game:GetService('RunService')
 
 local DEFAULT_LOCATION = game.ReplicatedStorage
-local FOLDER_LOCATION = DEFAULT_LOCATION
+local FOLDER_LOCATION = DEFAULT_LOCATION.Shared
 
 local FOLDER_NAME = 'BadNetworkEvents'
 local REMOTE_NAME = 'General'
@@ -93,7 +93,7 @@ if RunService:IsServer() then
 	if FOLDER_LOCATION == DEFAULT_LOCATION then
 		warn('Change Folder Location')
 	end
-	
+
 	local folder = CreateFolder(FOLDER_NAME,FOLDER_LOCATION)
 	CreateRemote(REMOTE_NAME,folder)
 end
@@ -105,33 +105,47 @@ Client._REMOTE_CONNECTIONS = {}
 Client._ON_ADDED_CONNECTIONS = {}
 
 function Client.new(namespace: string?)
-	local self = setmetatable({},{__index = Client})
+	local self = setmetatable({}, {__index = Client})
 	self._NAMESPACE = namespace
+	self._REMOTE_CONNECTIONS = {}
+	self._ON_ADDED_CONNECTIONS = {} 
 	return self
 end
+
 
 function Client:On(eventName: string, callback: ClientCallBack)
 	ErrorCheckForDuplicates(eventName,self._ON_ADDED_CONNECTIONS)
 	local remoteParentName = self._NAMESPACE or FOLDER_NAME
-
+	
 	local function AttemptToConnectToDescendant(descendant: Instance)
-		if descendant:IsA('RemoteEvent') and descendant.Name == eventName and descendant.Parent and descendant.Parent.Name == remoteParentName then
+		if descendant:IsA('RemoteEvent') and descendant.Parent and descendant.Parent.Name == remoteParentName then
+			if self._NAMESPACE and descendant.Name ~= eventName then return end
 			
 			if self._REMOTE_CONNECTIONS[eventName] then
 				self._REMOTE_CONNECTIONS[eventName]:Disconnect()
 			end
 			
-			self._REMOTE_CONNECTIONS[eventName] = descendant.OnClientEvent:Connect(callback)
+			if self._NAMESPACE then
+				self._REMOTE_CONNECTIONS[eventName] = descendant.OnClientEvent:Connect(callback)
+			else
+				self._REMOTE_CONNECTIONS[eventName] = descendant.OnClientEvent:Connect(function(_eventName: string,...)
+					if eventName == _eventName then
+						callback(...)
+					end
+				end)
+			end
+
+			
 		end
 	end
+	
+	self._ON_ADDED_CONNECTIONS[eventName] = FOLDER_LOCATION.DescendantAdded:Connect(function(descendant)
+		AttemptToConnectToDescendant(descendant)
+	end)
 
 	for _, descendant in FOLDER_LOCATION:GetDescendants() do
 		AttemptToConnectToDescendant(descendant)
 	end
-
-	self._ON_ADDED_CONNECTIONS[eventName] = FOLDER_LOCATION.DescendantAdded:Connect(function(descendant)
-		AttemptToConnectToDescendant(descendant)
-	end)
 end
 
 function Client:Fire(eventName: string, ...)
@@ -176,9 +190,9 @@ function Client:Destroy()
 		connection:Disconnect()
 	end
 
-	for index in pairs(self) do
-		self[index] = nil
-	end	
+	for index, _ in pairs(self) do
+        self[index] = nil
+    end
 end
 
 
@@ -189,23 +203,24 @@ Server._Events = {}
 Server._REMOTE_CONNECTIONS = {}
 
 function Server.new(namespace: string?, methods: {string}?)
-	local self = setmetatable({},{__index = Server})
+	local self = setmetatable({}, {__index = Server})
+	self._NAMESPACE = namespace
+	self._Events = {}
+	self._REMOTE_CONNECTIONS = {}
 
 	if namespace and methods then
-		self._NAMESPACE = namespace
-		local folder = CreateFolder(namespace,FOLDER_LOCATION:FindFirstChild(FOLDER_NAME))
-
+		local folder = CreateFolder(namespace, FOLDER_LOCATION:FindFirstChild(FOLDER_NAME))
 		for _, eventName in methods do
-			self._Events[eventName] = CreateRemote(eventName,folder)
+			self._Events[eventName] = CreateRemote(eventName, folder)
 		end
 	end
 
 	return self
 end
 
+
 function Server:On(eventName: string, callback: ServerCallBack)
 	if self._NAMESPACE then
-
 		local remote = self:_GetNamespaceRemote(eventName)
 		self._REMOTE_CONNECTIONS[eventName] = remote.OnServerEvent:Connect(function(player: Player,...)
 			callback(player,...)
@@ -282,9 +297,9 @@ function Server:Destroy()
 		end
 	end
 
-	for index in pairs(self) do
-		self[index] = nil
-	end	
+	for index, _ in pairs(self) do
+        self[index] = nil
+    end
 end
 
 
@@ -298,8 +313,8 @@ end
 local BadNetwork = {}
 
 function BadNetwork.new(namespace: string?, methods: {string}?)
-	local self = {}
-	
+	local self = setmetatable({}, {__index = BadNetwork})
+
 	if namespace and RunService:IsServer() then
 		assert(methods,`Event Method Name Table Must Begiven`)
 		assert(typeof(methods) =="table", "MethodNames Property Must Be In A Table")

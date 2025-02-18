@@ -10,35 +10,37 @@
     },
 
     "ReplicatedStorage": {
+      "$className": "ReplicatedStorage",
       "Shared": {
-        "$path": "src/shared"
+        "$className": "Folder",
+        "$path": "src/Shared"
       }
     },
 
     "ServerScriptService": {
-      "$path": "src/server",
-      "$ignoreUnknownInstances":true
+      "$className": "ServerScriptService",
+      "$path": "src/Server"
     },
 
-    "StarterGui": {
-      "Interface": {
-        "$path": "src/interface"
+    "StarterGui":{
+      "$className":"StarterGui",
+      "Interface":{
+        "$path": "src/Interface",
+        "$className":"Folder"
       },
-      "$ignoreUnknownInstances":true
+      "$ignoreUnknownInstances": true
     },
-
+    
     "StarterPlayer": {
+      "$className": "StarterPlayer",
       "StarterPlayerScripts": {
-        "$path": "src/client",
-        "$ignoreUnknownInstances":true 
+        "Client": {
+          "$className": "Folder",
+          "$path": "src/Client"
+        }
       }
     },
-
-    "Workspace": {
-      "$properties": {
-        "FilteringEnabled": true
-      }
-    },
+    
     "Lighting": {
       "$properties": {
         "Ambient": [
