@@ -1,11 +1,11 @@
 
-local funcLib = require(game.ReplicatedStorage.Shared.Modules.FuncLib)
+local FunctionUtil = require(game.ReplicatedStorage.Shared.Utils.FunctionUtil)
 
 
 
 local function setCollisions(character: Model)
     if not character then return end
-    funcLib.SetCollisionGroup(character,'Char')
+    FunctionUtil.SetCollisionGroup(character,'Char')
 end
 
 local function RemoveCharcter(player: Player)

@@ -1,3 +1,5 @@
+
+local MaidModule = require(game.ReplicatedStorage.Shared.Modules.Maid)
 local ContextActionService = game:GetService('ContextActionService')
 local player = game.Players.LocalPlayer
 
@@ -15,7 +17,7 @@ export type ContextAction = {
 	
 	Create: (self: ContextAction,keybindName: string, createButton: boolean) -> (),
 	BindToAction: (self: ContextAction, callBack: CallBack) -> (),
-	UnbindAction: (self: ContextAction) -> ()
+	Destroy: (self: ContextAction) -> ()
 }
 
 local function TransferButtonPropertiesAndChildren(sourceButton: ImageButton, targetButton: ImageButton)
@@ -47,8 +49,11 @@ end
 
 local ContextAction = {}
 
+ContextAction._MAID = nil
+
 function ContextAction.new() : ContextAction
 	local self = setmetatable({},{__index = ContextAction})
+	self._MAID = MaidModule.new()
 	return self
 end
 
@@ -76,24 +81,23 @@ end
 function ContextAction:BindToAction(callBack: CallBack)
 	local xbox = keyMapper.GetEnumFromString(self.__XBoxValue.Value) :: Enum.InputType
 	local pc = keyMapper.GetEnumFromString(self.__PCValue.Value) :: Enum.InputType
-	
+
 	local function Activate(actionName: string, inputState: Enum.UserInputState)
 		callBack(actionName, inputState)
 	end
-	
+
 	ContextActionService:BindAction(self.__KeybindName,Activate,self.__CreateButton, xbox,pc)
-	
+
 	if not self.__CreateButton then return end
-	
-	
+
 	local button: ImageButton = ContextActionService:GetButton(self.__KeybindName)
 	if not button then return end
-	
+
 	local buttonReffence: ImageButton? = self.ButtonReffence
 	assert(buttonReffence and buttonReffence:IsA('ImageButton'), self,`Invalid Button Reffence {buttonReffence}`)
-	
+
 	TransferButtonPropertiesAndChildren(buttonReffence,button)
-	
+
 	local updateImageValue = button:FindFirstChild('UpdateImage') :: StringValue
 
 	local function UpdateImage()
@@ -104,17 +108,16 @@ function ContextAction:BindToAction(callBack: CallBack)
 		end
 	end
 
-	-- Keep image
-	button:GetPropertyChangedSignal('Image'):Connect(function()
+	self._MAID['Property Changed Signal'] = button:GetPropertyChangedSignal('Image'):Connect(function()
 		if button.Image == buttonReffence.Image then return end
 		if updateImageValue and button.Image == updateImageValue.Value then return end
 		UpdateImage()
 	end)
-	
 end
 
 
-function ContextAction:UnbindAction()
+function ContextAction:Destroy()
+	self._MAID:DoCleaning()
 	ContextActionService:UnbindAction(self.__KeybindName)
 end
 

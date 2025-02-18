@@ -9,6 +9,7 @@ local registeredCallbacks = {
 	Spawn = {} :: CallbackTable,
 	Loaded = {} :: CallbackTable,
 	Died = {} :: CallbackTable,
+	Removing = {} :: CallbackTable, -- Added Removing event
 }
 
 local function FireCallbacks(eventType: string, character: Model)
@@ -31,6 +32,13 @@ local function OnCharacterAdded(character: Model)
 			FireCallbacks("Died", character)
 		end)
 	end
+
+	-- Detect when the character is being removed
+	character.AncestryChanged:Connect(function(_, parent)
+		if parent == nil then
+			FireCallbacks("Removing", character)
+		end
+	end)
 end
 
 local function RegisterCallback(eventType: string, callback: Callback)
@@ -53,6 +61,10 @@ end
 
 function CharacterEvents.Died(callback: Callback)
 	RegisterCallback("Died", callback)
+end
+
+function CharacterEvents.Removing(callback: Callback) -- Added Removing function
+	RegisterCallback("Removing", callback)
 end
 
 Players.LocalPlayer.CharacterAdded:Connect(OnCharacterAdded)
