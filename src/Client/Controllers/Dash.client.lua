@@ -1,20 +1,23 @@
 local RunService = game:GetService("RunService")
 
 local Player = game.Players.LocalPlayer
+local DashAmount: NumberValue = Player:WaitForChild('DashAmount', 20)
+
 local Client = script.Parent.Parent
 
 local MaidModule = require(game.ReplicatedStorage.Shared.Modules.Maid)
+local BadNetwork = require(game.ReplicatedStorage.Shared.Modules.BadNetwork)
 local ContextActionComponet = require(Client.Components.ContextAction)
 local CharacterEvents = require(Client.Modules.CharacterEvents)
 local AnimationUtil = require(game.ReplicatedStorage.Shared.Utils.AnimationUtil)
+local DashConfig = require(game.ReplicatedStorage.Shared.Configs.DashConfig)
 
 local maid: MaidModule.Maid = MaidModule.new()
+local network: BadNetwork.Client = BadNetwork.new()
 local ContextAction: ContextActionComponet.ContextAction?
 
-local DURATION = 0.6
-local FORCE = 80
-local MAX_FORCE = Vector3.new(400000,400000,400000)
 
+local AnimationTracks: {[string]: AnimationTrack} = {}
 local AnimationIDs = {
     BackDash = 'rbxassetid://130503476646842',
     ForwardDash = 'rbxassetid://77797973242645',
@@ -22,12 +25,11 @@ local AnimationIDs = {
     RightDash = "rbxassetid://126019822262324",
 }
 
-local AnimationTracks: {[string]: AnimationTrack} = {}
-
+local LastTimeDashed: number
 
 local function CreateBodyVelocity()
     local bv = Instance.new('BodyVelocity')
-    bv.MaxForce = MAX_FORCE
+    bv.MaxForce = DashConfig.MAX_FORCE
     return bv
 end
 
@@ -66,17 +68,37 @@ local function GetDirectionalVectorAndAnimation(): (Vector3, AnimationTrack)
         return movementVectore, animTrack
 end
 
+local function CanDash(): boolean
+    local character = Player.Character
+    local Humanoid: Humanoid = character:FindFirstChild('Humanoid')
+
+    if DashAmount.Value <= 0 then return false end
+    if Humanoid.FloorMaterial == Enum.Material.Air then return false end
+    if LastTimeDashed and (tick()  - LastTimeDashed) < DashConfig.Cooldown then
+        return false
+    end
+
+    return true
+end
+
+
+
 local function Dash(_, inputState: Enum.UserInputState)
     if inputState == Enum.UserInputState.End then return end
+    if not CanDash() then return end
+
+    maid:DoCleaning()
+    network:Fire('GroundDashActivated')
+    LastTimeDashed = tick()
 
     local character = Player.Character
     local rootPart: Part = character.HumanoidRootPart
     local startTick = tick()
 
     local directionVelocity, animationTrack = GetDirectionalVectorAndAnimation()
-    directionVelocity *= FORCE
+    directionVelocity *= DashConfig.FORCE
 
-    animationTrack:Play()
+    AnimationUtil.PlayTrackForDuration(animationTrack,DashConfig.DURATION)
 
     local BodyVelocity = CreateBodyVelocity()
     BodyVelocity.Parent = rootPart
@@ -85,7 +107,7 @@ local function Dash(_, inputState: Enum.UserInputState)
 
     maid['RunService'] = RunService.Heartbeat:Connect(function()
         local timePassed = tick() - startTick
-        local percentageToGoal = math.clamp(timePassed / DURATION,0,1)
+        local percentageToGoal = math.clamp(timePassed / DashConfig.DURATION,0,1)
         BodyVelocity.Velocity = directionVelocity * (1 - percentageToGoal)
 
         if percentageToGoal >= 1 then
@@ -95,20 +117,21 @@ local function Dash(_, inputState: Enum.UserInputState)
 
 end
 
-local function UnbindConetxtAction()
-    if not ContextAction then return end
-    ContextAction:Destroy()
-    maid:DoCleaning()
-end
+
 
 CharacterEvents.Spawn(function(character: Model)
     ContextAction = ContextActionComponet.new()
-
     ContextAction:Create('Dash',false)
     ContextAction:BindToAction(Dash)
 
     AnimationTracks = AnimationUtil.CreateAnimationTracks(character,AnimationIDs)
 end)
+
+local function UnbindConetxtAction()
+    if not ContextAction then return end
+    ContextAction:Destroy()
+    maid:DoCleaning()
+end
 
 CharacterEvents.Died(UnbindConetxtAction)
 CharacterEvents.Removing(UnbindConetxtAction)

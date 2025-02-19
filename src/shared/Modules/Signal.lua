@@ -23,6 +23,24 @@
 --   stravant - July 31st, 2021 - Created the file.                           --
 --------------------------------------------------------------------------------
 
+export type Connection = {
+    Disconnect: (self: Connection) -> (),
+    _connected: boolean,
+    _signal: Signal,
+    _fn: (...any) -> (),
+    _next: Connection | false,
+}
+
+export type Signal = {
+    Connect: (self: Signal, fn: (...any) -> ()) -> Connection,
+    DisconnectAll: (self: Signal) -> (),
+    Fire: (self: Signal, ...any) -> (),
+    Wait: (self: Signal) -> ...any,
+    Once: (self: Signal, fn: (...any) -> ()) -> Connection,
+    _handlerListHead: Connection | false,
+}
+
+
 -- The currently idle thread to run the next handler on
 local freeRunnerThread = nil
 

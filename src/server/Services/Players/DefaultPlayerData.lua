@@ -1,3 +1,4 @@
+
 export type DataTemplate = {
 	Keybinds: {
 		Attack: {
@@ -16,7 +17,7 @@ local DefaultPlayerData = {}
 
 DefaultPlayerData.Instances = {
     FinishedLoading = false,
-
+	DashAmount = 0,
 	Keybinds = {},
 }
 

@@ -42,19 +42,4 @@ function PlayerDataAPI._Clear(playerName: string)
     LoadedData[playerName] = nil
 end
 
-function PlayerDataAPI.GetLastWeaponEquipped(playerName: string): string
-    local data = GetData(playerName)
-    return data.LastWeaponEquipped
-end
-
-function PlayerDataAPI.GetHiderAbilityNames(playerName: string): {string}
-    local data = GetData(playerName)
-    return data.EquippedHiderAbilities
-end
-
-function PlayerDataAPI.GetSeekerAbilityNames(playerName: string)
-    local data = GetData(playerName)
-    return data.EquippedSeekerAbilities
-end
-
 return PlayerDataAPI

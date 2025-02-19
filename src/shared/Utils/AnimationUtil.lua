@@ -21,9 +21,28 @@ function AnimationUtil.CreateAnimationTracks(character: Model, animationIDs: {[s
 
         local track = animator:LoadAnimation(animation)
         animationTracks[name] = track
+        animation:Destroy()
     end
 
     return animationTracks
 end
+
+function AnimationUtil.PlayTrackForDuration(animationTrack: AnimationTrack, duration: number)
+    if not animationTrack or not animationTrack:IsA("AnimationTrack") then
+        warn("Invalid AnimationTrack provided.")
+        return
+    end
+
+    local animationLength = animationTrack.Length
+    if animationLength <= 0 then
+        warn("Animation length is invalid or zero.")
+        return
+    end
+
+    local playbackSpeed = animationLength / duration
+    animationTrack:Play()
+    animationTrack:AdjustSpeed(playbackSpeed)
+end
+
 
 return AnimationUtil

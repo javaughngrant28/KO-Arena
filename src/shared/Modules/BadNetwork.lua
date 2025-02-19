@@ -150,7 +150,6 @@ end
 
 function Client:Fire(eventName: string, ...)
 	if self._NAMESPACE then
-		print(FOLDER_LOCATION:GetChildren())
 		local folder = FOLDER_LOCATION:FindFirstChild(FOLDER_NAME):FindFirstChild(self._NAMESPACE) :: Folder
 		assert(folder and folder:IsA('Folder'), `Namespace folder not created {self._NAMESPACE}`)
 
@@ -158,10 +157,9 @@ function Client:Fire(eventName: string, ...)
 		assert(remote and remote:IsA('RemoteEvent'), `RemoteEvent Not Found For Namespace:{self._NAMESPACE} Event: {eventName}`)
 
 		remote:FireServer(...)
-
 	else
 		local generalRemote = GetGeneralRemote() :: RemoteEvent
-		generalRemote:FireServer(...)
+		generalRemote:FireServer(eventName,...)
 	end
 end
 
