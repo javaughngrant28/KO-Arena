@@ -6,18 +6,32 @@ local Client = script.Parent.Parent
 local MaidModule = require(game.ReplicatedStorage.Shared.Modules.Maid)
 local ContextActionComponet = require(Client.Components.ContextAction)
 local CharacterEvents = require(Client.Modules.CharacterEvents)
+local AnimationUtil = require(game.ReplicatedStorage.Shared.Utils.AnimationUtil)
 
 local maid: MaidModule.Maid = MaidModule.new()
 local ContextAction: ContextActionComponet.ContextAction?
 
-local DURATION = 0.8
-local MAX_FORCE = 200
+local DURATION = 0.6
+local FORCE = 80
+local MAX_FORCE = Vector3.new(400000,400000,400000)
 
-local function easeOutExpo(t: number)
-    return if t == 1 then 1 else 1 - math.pow(2, -10 * t)
+local AnimationIDs = {
+    BackDash = 'rbxassetid://130503476646842',
+    ForwardDash = 'rbxassetid://77797973242645',
+    LeftDash = "rbxassetid://109512074042537",
+    RightDash = "rbxassetid://126019822262324",
+}
+
+local AnimationTracks: {[string]: AnimationTrack} = {}
+
+
+local function CreateBodyVelocity()
+    local bv = Instance.new('BodyVelocity')
+    bv.MaxForce = MAX_FORCE
+    return bv
 end
 
-local function DirectonalVectore(): Vector3
+local function GetDirectionalVectorAndAnimation(): (Vector3, AnimationTrack)
     local character = Player.Character
     local rootPart: Part = character.HumanoidRootPart
 
@@ -25,26 +39,31 @@ local function DirectonalVectore(): Vector3
 
         local forward = rootPart.CFrame.LookVector
         local right = rootPart.CFrame.RightVector 
-    
+
         local dotForward = moveDirection:Dot(forward)
         local dotRight = moveDirection:Dot(right)
 
         local movementVectore: Vector3
+        local animTrack: AnimationTrack
 
         if math.abs(dotForward) > math.abs(dotRight) then
             if dotForward > 0 then
                 movementVectore = forward --Forward
+                animTrack = AnimationTracks.ForwardDash
             else
                 movementVectore = -forward --Backward
+                animTrack = AnimationTracks.BackDash
             end
         else
             if dotRight > 0 then
                 movementVectore = right --Right
+                animTrack = AnimationTracks.RightDash
             else
                 movementVectore = -right --Left
+                animTrack = AnimationTracks.LeftDash
             end
         end
-        return movementVectore
+        return movementVectore, animTrack
 end
 
 local function Dash(_, inputState: Enum.UserInputState)
@@ -54,23 +73,24 @@ local function Dash(_, inputState: Enum.UserInputState)
     local rootPart: Part = character.HumanoidRootPart
     local startTick = tick()
 
-    local DIRACTION = DirectonalVectore()
+    local directionVelocity, animationTrack = GetDirectionalVectorAndAnimation()
+    directionVelocity *= FORCE
+
+    animationTrack:Play()
+
+    local BodyVelocity = CreateBodyVelocity()
+    BodyVelocity.Parent = rootPart
+
+    maid['BodyVelocity'] = BodyVelocity
 
     maid['RunService'] = RunService.Heartbeat:Connect(function()
-        local elapsedTime = tick() - startTick
-        local alpha = math.clamp(elapsedTime / DURATION, 0, 1)
-        local curvedAlpha = easeOutExpo(alpha)
+        local timePassed = tick() - startTick
+        local percentageToGoal = math.clamp(timePassed / DURATION,0,1)
+        BodyVelocity.Velocity = directionVelocity * (1 - percentageToGoal)
 
-        local x_Force = math.lerp(MAX_FORCE, 0, curvedAlpha)
-
-        local force = rootPart.AssemblyMass + x_Force
-        rootPart.AssemblyLinearVelocity = DIRACTION * force
-
-        if alpha >= 1 then
-            maid['RunService'] = nil
+        if percentageToGoal >= 1 then
+            maid:DoCleaning()
         end
-        
-    
     end)
 
 end
@@ -86,6 +106,8 @@ CharacterEvents.Spawn(function(character: Model)
 
     ContextAction:Create('Dash',false)
     ContextAction:BindToAction(Dash)
+
+    AnimationTracks = AnimationUtil.CreateAnimationTracks(character,AnimationIDs)
 end)
 
 CharacterEvents.Died(UnbindConetxtAction)
