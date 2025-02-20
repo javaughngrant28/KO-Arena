@@ -1,10 +1,10 @@
 local AnimationUtil = {}
 
-function AnimationUtil.CreateAnimationTracks(character: Model, animationIDs: {[string]: string}): {[string]: AnimationTrack}
+function AnimationUtil.LoadAnimationTrack(character: Model, animationID: string): AnimationTrack
     local humanoid = character:FindFirstChildOfClass("Humanoid")
     if not humanoid then
         warn("No Humanoid found in character")
-        return {}
+        return nil
     end
 
     local animator = humanoid:FindFirstChildOfClass("Animator")
@@ -13,17 +13,22 @@ function AnimationUtil.CreateAnimationTracks(character: Model, animationIDs: {[s
         animator.Parent = humanoid
     end
 
+    local animation = Instance.new("Animation")
+    animation.AnimationId = animationID
+
+    local track = animator:LoadAnimation(animation)
+    animation:Destroy()
+    return track
+end
+
+function AnimationUtil.CreateAnimationTracks(character: Model, animationIDs: {[string]: string}): {[string]: AnimationTrack}
     local animationTracks = {}
-
     for name, id in pairs(animationIDs) do
-        local animation = Instance.new("Animation")
-        animation.AnimationId = id
-
-        local track = animator:LoadAnimation(animation)
-        animationTracks[name] = track
-        animation:Destroy()
+        local track = AnimationUtil.LoadAnimationTrack(character, id)
+        if track then
+            animationTracks[name] = track
+        end
     end
-
     return animationTracks
 end
 
@@ -43,6 +48,5 @@ function AnimationUtil.PlayTrackForDuration(animationTrack: AnimationTrack, dura
     animationTrack:Play()
     animationTrack:AdjustSpeed(playbackSpeed)
 end
-
 
 return AnimationUtil

@@ -3,6 +3,7 @@ local Players = game:GetService("Players")
 
 local BadNetwork = require(game.ReplicatedStorage.Shared.Modules.BadNetwork)
 local DashConfig = require(game.ReplicatedStorage.Shared.Configs.DashConfig)
+local AirDashConfig = require(game.ReplicatedStorage.Shared.Configs.AirDashConfig)
 local PlayerAPI = require(game.ServerScriptService.Services.Players.PlayerAPI)
 
 local soundUtil = require(game.ReplicatedStorage.Shared.Utils.SoundUtil)
@@ -16,6 +17,9 @@ local IsDashingTasks = {}
 
 local GoundDashSound: Sound = game.ReplicatedStorage.Assets.Sounds.Dash.Dash
 
+local function PlaySound(player: Player)
+    soundUtil.PlayFromPlayerCharacter(player,GoundDashSound)
+end
 
 local function GetDashAmountValue(player: Player): NumberValue
     return player:FindFirstChild('DashAmount') :: NumberValue
@@ -26,10 +30,10 @@ local function GetIsDashingValue(player: Player): BoolValue
 end
 
 
-local function CreateActiveIsDashingTask(player: Player)
+local function CreateActiveIsDashingTask(player: Player, duration: number)
     local value = GetIsDashingValue(player)
     value.Value = true
-    local thread = task.delay(DashConfig.DURATION,function()
+    local thread = task.delay(duration,function()
         value.Value = false
     end)
     IsDashingTasks[player.Name] = thread
@@ -41,16 +45,26 @@ local function CancelActiveDashingTask(playerName: string)
     task.cancel(dashingTask)
 end
 
-local function EnableDashingValueForDuation(player: Player)
+local function EnableDashingValueForDuation(player: Player, dashDuration: number)
     CancelActiveDashingTask(player.Name)
-    CreateActiveIsDashingTask(player)
+    CreateActiveIsDashingTask(player,dashDuration)
+end
+
+local function SubDashAbount(player: Player)
+    local DashAmount = GetDashAmountValue(player)
+    DashAmount.Value -= 1
 end
 
 local function GroundDash(player: Player)
-    local DashAmount = GetDashAmountValue(player)
-    DashAmount.Value -= 1
-    EnableDashingValueForDuation(player)
-    soundUtil.PlayFromPlayerCharacter(player,GoundDashSound)
+    SubDashAbount(player)
+    EnableDashingValueForDuation(player, DashConfig.DURATION)
+    PlaySound(player)
+end
+
+local function AirDash(player: Player)
+    SubDashAbount(player)
+    EnableDashingValueForDuation(player, AirDashConfig.DURATION)
+    PlaySound(player)
 end
 
 local function RegenerateDash(player: Player)
@@ -92,6 +106,7 @@ end
 
 
 
+network:On('AirDashActivated', AirDash)
 network:On('GroundDashActivated', GroundDash)
 network:On('RegenerateDash', RegenerateDash)
 

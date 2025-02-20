@@ -86,7 +86,7 @@ function CharacterDash.Active(animTrack: AnimationTrack, duration: number, veloc
         local percentageToGoal = math.clamp(timePassed / duration,0,1)
         BodyVelocity.Velocity = velocity * (1 - percentageToGoal)
 
-        if percentageToGoal >= 1 then
+        if percentageToGoal >= 0.78 then
             CharacterDash.Cencel()
         end
     end)
