@@ -1,3 +1,4 @@
+local UserInputService = game:GetService("UserInputService")
 
 local Player = game.Players.LocalPlayer
 local IsDashing: NumberValue = Player:WaitForChild('IsDashing', 20)
@@ -19,6 +20,7 @@ local maid: MaidModule.Maid = MaidModule.new()
 
 local spinAnimationID = 'rbxassetid://99700892967637'
 local spinAnimation: AnimationTrack = nil
+
 
 local function CanAirDash()
     if IsDashing.Value == true then return false end
@@ -49,30 +51,12 @@ end
 CharacterEvents.Spawn(function(character: Model)
     spinAnimation = AnimationUtil.LoadAnimationTrack(character,spinAnimationID)
     ContextAction.BindKeybind('Dash',1,AirDash)
-
-    -- local humanoid = character:FindFirstChild('Humanoid') :: Humanoid
-	
-	
-	-- maid['JumpRequest'] = UIS.JumpRequest:Connect(function()
-	-- 	if debounce and numberOfJumps < CharacterUtil.MaxJumps then
-	-- 		humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-	-- 	end
-	-- end)
 end)
 
+local function onRemoving()
+    ContextAction.UnbindKeybind('Dash',AirDash)
+end
 
+CharacterEvents.Died(onRemoving)
+CharacterEvents.Removing(onRemoving)
 
-
-
--- maid['JumpConnection'] = humanoid.StateChanged:Connect(function(oldstate, newstate)
--- 	if Enum.HumanoidStateType.Landed == newstate then
--- 		numberOfJumps = 0
--- 		debounce = false
--- 	elseif Enum.HumanoidStateType.Freefall == newstate then
--- 		wait(debounceTime)
--- 		debounce = true
--- 	elseif Enum.HumanoidStateType.Jumping == newstate then
--- 		debounce = false
--- 		numberOfJumps += 1
--- 	end
--- end)

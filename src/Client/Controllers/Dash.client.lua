@@ -50,6 +50,7 @@ CharacterEvents.Spawn(function()
 end)
 
 local function UnbindConetxtAction()
+    CharacterDash.Cencel()
     ContextAction.UnbindKeybind('Dash',Dash)
 end
 
