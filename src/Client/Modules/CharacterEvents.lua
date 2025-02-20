@@ -67,9 +67,12 @@ function CharacterEvents.Removing(callback: Callback) -- Added Removing function
 	RegisterCallback("Removing", callback)
 end
 
-Players.LocalPlayer.CharacterAdded:Connect(OnCharacterAdded)
 if Players.LocalPlayer.Character then
-	task.spawn(OnCharacterAdded, Players.LocalPlayer.Character)
+	task.spawn(function()
+		task.wait(0.4)
+		OnCharacterAdded(Players.LocalPlayer.Character)
+	end)
 end
+Players.LocalPlayer.CharacterAdded:Connect(OnCharacterAdded)
 
 return CharacterEvents
