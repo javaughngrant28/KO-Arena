@@ -1,124 +1,75 @@
-
-local MaidModule = require(game.ReplicatedStorage.Shared.Modules.Maid)
-local ContextActionService = game:GetService('ContextActionService')
+local ContextActionService = game:GetService("ContextActionService")
 local player = game.Players.LocalPlayer
-
 local keyMapper = require(game.ReplicatedStorage.Shared.Modules.KeyMapper)
 
 type CallBack = (actionName: string, inputState: Enum.UserInputState) -> ()
 
-export type ContextAction = {
-	__CreateButton: boolean,
-	__KeybindName: string,
-	__PCValue: StringValue,
-	__XBoxValue: StringValue,
-	
-	ButtonReffence: ImageButton?, 
-	
-	Create: (self: ContextAction,keybindName: string, createButton: boolean) -> (),
-	BindToAction: (self: ContextAction, callBack: CallBack) -> (),
-	Destroy: (self: ContextAction) -> ()
+local Actions: { [string]: { { Priority: number, Callback: CallBack } } } = {}
+
+local function HandleAction(actionName: string, inputState: Enum.UserInputState)
+    local actionList = Actions[actionName]
+    if not actionList or #actionList == 0 then return end
+
+    table.sort(actionList, function(a, b)
+        return a.Priority > b.Priority
+    end)
+
+    for i, action in ipairs(actionList) do
+        local result = action.Callback(actionName, inputState)
+        if result == Enum.ContextActionResult.Sink then
+            return
+        elseif result ~= Enum.ContextActionResult.Pass then
+            break
+        end
+    end
+end
+
+
+local function BindKeybind(keybindName: string, priority: number, callback: CallBack)
+    assert(type(keybindName) == "string", "Invalid keybind name")
+    assert(type(callback) == "function", "Callback must be a function")
+
+    local keybinds = player:FindFirstChild("Keybinds")
+    assert(keybinds, "Keybind Folder Not Found")
+
+    local keybind = keybinds:FindFirstChild(keybindName)
+    assert(keybind, `Keybind Not Found: {keybindName}`)
+
+    local pcValue = keybind:FindFirstChild("PC")
+    local xboxValue = keybind:FindFirstChild("Xbox")
+    assert(pcValue and xboxValue, "Invalid keybind values")
+
+    local xbox = keyMapper.GetEnumFromString(xboxValue.Value) :: Enum.KeyCode
+    local pc = keyMapper.GetEnumFromString(pcValue.Value) :: Enum.KeyCode
+
+    Actions[keybindName] = Actions[keybindName] or {}
+    table.insert(Actions[keybindName], { Priority = priority or 0, Callback = callback })
+
+    if #Actions[keybindName] == 1 then
+        ContextActionService:BindActionAtPriority(keybindName, HandleAction, false, priority or 0, xbox, pc)
+    end
+end
+
+local function UnbindKeybind(keybindName: string, callback: CallBack?)
+    if not Actions[keybindName] then return end
+
+    if callback then
+        for i, action in ipairs(Actions[keybindName]) do
+            if action.Callback == callback then
+                table.remove(Actions[keybindName], i)
+                break
+            end
+        end
+    else
+        Actions[keybindName] = nil
+    end
+
+    if not Actions[keybindName] or #Actions[keybindName] == 0 then
+        ContextActionService:UnbindAction(keybindName)
+    end
+end
+
+return {
+    BindKeybind = BindKeybind,
+    UnbindKeybind = UnbindKeybind,
 }
-
-local function TransferButtonPropertiesAndChildren(sourceButton: ImageButton, targetButton: ImageButton)
-	-- List of common properties you might want to transfer
-	local properties = {
-		"Size", "Position", "AnchorPoint", "BackgroundColor3", 
-		"BackgroundTransparency", "Text", "TextColor3", "Font", 
-		"TextSize", "Image", "ImageRectOffset", "ImageRectSize", 
-		"Visible", "ZIndex", "BorderSizePixel"
-	}
-
-	-- Transfer properties
-	for _, property in ipairs(properties) do
-		if sourceButton:IsA("GuiObject") and targetButton:IsA("GuiObject") then
-			local success, value = pcall(function() return sourceButton[property] end)
-			if success then
-				targetButton[property] = value
-			end
-		end
-	end
-
-	-- Transfer children
-	for _, child in ipairs(sourceButton:GetChildren()) do
-		local newChild = child:Clone()  -- Clone the child before adding it
-		newChild.Parent = targetButton
-	end
-end
-
-
-local ContextAction = {}
-
-ContextAction._MAID = nil
-
-function ContextAction.new() : ContextAction
-	local self = setmetatable({},{__index = ContextAction})
-	self._MAID = MaidModule.new()
-	return self
-end
-
-function ContextAction:Create(keybindName: string, createButton: boolean)
-	assert(keybindName,'Keybind Name Invalid')
-	assert(typeof(createButton) == "boolean",'Create Button Invalid')
-
-	local keybinds = player:FindFirstChild('Keybinds') :: Folder
-	assert(keybinds,"Keybind Folder Not Found")
-
-	local keybind = keybinds:FindFirstChild(keybindName)
-	assert(keybind,`Keybind Not Found: {keybindName}`)
-
-	local PCValue = keybind:FindFirstChild('PC')
-	local XboxValue = keybind:FindFirstChild('Xbox')
-
-	assert(PCValue and XboxValue, `PC and Xbox Value Invalid: {PCValue} | {XboxValue}`)
-	
-	self.__CreateButton = createButton
-	self.__KeybindName = keybindName
-	self.__PCValue = PCValue
-	self.__XBoxValue = XboxValue
-end
-
-function ContextAction:BindToAction(callBack: CallBack)
-	local xbox = keyMapper.GetEnumFromString(self.__XBoxValue.Value) :: Enum.InputType
-	local pc = keyMapper.GetEnumFromString(self.__PCValue.Value) :: Enum.InputType
-
-	local function Activate(actionName: string, inputState: Enum.UserInputState)
-		callBack(actionName, inputState)
-	end
-
-	ContextActionService:BindAction(self.__KeybindName,Activate,self.__CreateButton, xbox,pc)
-
-	if not self.__CreateButton then return end
-
-	local button: ImageButton = ContextActionService:GetButton(self.__KeybindName)
-	if not button then return end
-
-	local buttonReffence: ImageButton? = self.ButtonReffence
-	assert(buttonReffence and buttonReffence:IsA('ImageButton'), self,`Invalid Button Reffence {buttonReffence}`)
-
-	TransferButtonPropertiesAndChildren(buttonReffence,button)
-
-	local updateImageValue = button:FindFirstChild('UpdateImage') :: StringValue
-
-	local function UpdateImage()
-		if updateImageValue then
-			button.Image = updateImageValue.Value
-		else
-			button.Image = buttonReffence.Image
-		end
-	end
-
-	self._MAID['Property Changed Signal'] = button:GetPropertyChangedSignal('Image'):Connect(function()
-		if button.Image == buttonReffence.Image then return end
-		if updateImageValue and button.Image == updateImageValue.Value then return end
-		UpdateImage()
-	end)
-end
-
-
-function ContextAction:Destroy()
-	self._MAID:DoCleaning()
-	ContextActionService:UnbindAction(self.__KeybindName)
-end
-
-return ContextAction
