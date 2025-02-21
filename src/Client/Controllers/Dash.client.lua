@@ -51,7 +51,7 @@ end)
 
 local function UnbindConetxtAction()
     CharacterDash.Cencel()
-    ContextAction.UnbindKeybind('Dash',Dash)
+    ContextAction.UnbindKeybind('Dash')
 end
 
 CharacterEvents.Died(UnbindConetxtAction)

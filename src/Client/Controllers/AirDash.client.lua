@@ -52,11 +52,3 @@ CharacterEvents.Spawn(function(character: Model)
     spinAnimation = AnimationUtil.LoadAnimationTrack(character,spinAnimationID)
     ContextAction.BindKeybind('Dash',1,AirDash)
 end)
-
-local function onRemoving()
-    ContextAction.UnbindKeybind('Dash',AirDash)
-end
-
-CharacterEvents.Died(onRemoving)
-CharacterEvents.Removing(onRemoving)
-
