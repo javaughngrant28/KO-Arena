@@ -5,7 +5,7 @@ local DashAmount: NumberValue = Player:WaitForChild('DashAmount', 20)
 local Client = script.Parent.Parent
 
 local BadNetwork = require(game.ReplicatedStorage.Shared.Modules.BadNetwork)
-local CharacterEvents = require(Client.Modules.CharacterEvents)
+local CharacterEvents = require(Client.Components.CharacterEvents)
 local CharacterDash = require(Client.Components.CharacterDash)
 local ContextAction = require(Client.Components.ContextAction)
 local DashConfig = require(game.ReplicatedStorage.Shared.Configs.DashConfig)

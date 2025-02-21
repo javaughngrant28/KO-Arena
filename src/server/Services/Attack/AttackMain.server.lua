@@ -9,10 +9,8 @@ local network: BadNetwork.Server = BadNetwork.new()
 local maid: MaidModule.Maid = MaidModule.new()
 
 local function Hit(humanoid: Humanoid, targetHumanoid: Humanoid)
-    if humanoid.Health <= 0 then
-        return
-    end
-    humanoid.Health = 0
+    if humanoid.Health <= 0 or targetHumanoid.Health <= 0 then return end
+    targetHumanoid.Health = 0
 end
 
 function Attack(player: Player)
@@ -25,7 +23,6 @@ function Attack(player: Player)
     OverlapParams.FilterDescendantsInstances = {character}
 
     local hitbox = HitboxModule.CreateHitbox()
-    hitbox.VisualizerColor = Color3.new(1, 0.250980, 0.250980)  
     hitbox.VelocityPrediction = true
     hitbox.OverlapParams = OverlapParams
     hitbox.DetectionMode = "HitOnce"

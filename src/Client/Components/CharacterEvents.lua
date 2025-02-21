@@ -69,7 +69,7 @@ end
 
 if Players.LocalPlayer.Character then
 	task.spawn(function()
-		task.wait(0.4)
+		task.wait(0.8)
 		OnCharacterAdded(Players.LocalPlayer.Character)
 	end)
 end

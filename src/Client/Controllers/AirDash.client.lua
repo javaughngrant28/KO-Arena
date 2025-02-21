@@ -8,7 +8,7 @@ local Client = script.Parent.Parent
 local BadNetwork = require(game.ReplicatedStorage.Shared.Modules.BadNetwork)
 local MaidModule = require(game.ReplicatedStorage.Shared.Modules.Maid)
 local ContextAction = require(Client.Components.ContextAction)
-local CharacterEvents = require(Client.Modules.CharacterEvents)
+local CharacterEvents = require(Client.Components.CharacterEvents)
 local CharacterDash = require(Client.Components.CharacterDash)
 local AnimationUtil = require(game.ReplicatedStorage.Shared.Utils.AnimationUtil)
 

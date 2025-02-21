@@ -5,7 +5,7 @@ local Client = script.Parent.Parent
 
 local MaidModule = require(game.ReplicatedStorage.Shared.Modules.Maid)
 local AnimationUtil = require(game.ReplicatedStorage.Shared.Utils.AnimationUtil)
-local CharacterEvents = require(Client.Modules.CharacterEvents)
+local CharacterEvents = require(Client.Components.CharacterEvents)
 
 local maid: MaidModule.Maid = MaidModule.new()
 
