@@ -1,10 +1,10 @@
 local soundService = game:GetService('SoundService')
 local SoundUtil = {}
 
-function SoundUtil.PlayFromPlayerCharacter(player: Player, sound: Sound)
-	if player == nil or sound == nil or sound.ClassName ~= 'Sound' then return end
+function SoundUtil.PlayFromPlayerCharacter(target: Player | Model, sound: Sound)
+	if target == nil or sound == nil or sound.ClassName ~= 'Sound' then return end
 
-	local character: Model = player.Character
+	local character: Model =  target.ClassName == 'Model' and target or target.Character
 	if character == nil then return end
 
 	local hrp: Part = character:FindFirstChild('HumanoidRootPart')

@@ -47,8 +47,7 @@ local function RegisterCallback(eventType: string, callback: Callback)
 	table.insert(registeredCallbacks[eventType], callback)
 
 	local character = Players.LocalPlayer.Character
-	if character and eventType == "Loaded" and character.Parent then
-		task.wait(0.4)
+	if character and (eventType == "Loaded" or eventType == "Spawn") and character.Parent then
 		callback(character)
 	end
 end

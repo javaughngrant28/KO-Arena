@@ -39,6 +39,11 @@ local function CanAttack()
     if lastTimeAttacked and (tick() - lastTimeAttacked) < AttackConfig.Cooldown then
         return false
     end
+
+    if player.Character.HumanoidRootPart.Anchored == true then
+        return false
+    end
+    
     return true
 end
 

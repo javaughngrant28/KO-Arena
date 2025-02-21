@@ -3,14 +3,23 @@ local ServerStorage = game:GetService("ServerStorage")
 local HitboxModule = require(ServerStorage.Libraries.MuchachoHitbox)
 local BadNetwork = require(game.ReplicatedStorage.Shared.Modules.BadNetwork)
 local MaidModule = require(game.ReplicatedStorage.Shared.Modules.Maid)
+
+local SoundUtil = require(game.ReplicatedStorage.Shared.Utils.SoundUtil)
 local AttackConfig = require(game.ReplicatedStorage.Shared.Configs.AttackConfig)
 
 local network: BadNetwork.Server = BadNetwork.new()
 local maid: MaidModule.Maid = MaidModule.new()
 
+local AttackLandedSound = game.ReplicatedStorage.Assets.Sounds.Attack.HitLanded
+
 local function Hit(humanoid: Humanoid, targetHumanoid: Humanoid)
     if humanoid.Health <= 0 or targetHumanoid.Health <= 0 then return end
-    targetHumanoid.Health = 0
+    -- targetHumanoid.Health = 0
+
+    local TragetCharacter: Model = targetHumanoid.Parent
+    local TargetRootpart: Part = TragetCharacter.HumanoidRootPart
+
+    SoundUtil.PlayFromPlayerCharacter(TragetCharacter, AttackLandedSound)
 end
 
 function Attack(player: Player)
