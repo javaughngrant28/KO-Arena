@@ -20,15 +20,6 @@ local AttackAnimationIDs = {
     m3 = 'rbxassetid://119287767212046',
 }
 
-local IdleAnimationIDs = {
-    Animation1 = 'rbxassetid://128827501832882',
-	Animation2 = 'rbxassetid://128827501832882',
-}
-
-local WalkAnimationID = 'rbxassetid://114939245972552'
-local RunAnimationID = 'rbxassetid://114939245972552'
-
-
 
 local function CanAttack()
     if lastTimeAttacked and (tick() - lastTimeAttacked) < AttackConfig.Cooldown then
