@@ -19,6 +19,7 @@ local function FireCallbacks(eventType: string, character: Model)
 end
 
 local function OnCharacterAdded(character: Model)
+	print('Spawn')
 	FireCallbacks("Spawn", character)
 
 	if character:IsDescendantOf(workspace) then
@@ -47,6 +48,7 @@ local function RegisterCallback(eventType: string, callback: Callback)
 
 	local character = Players.LocalPlayer.Character
 	if character and eventType == "Loaded" and character.Parent then
+		task.wait(0.4)
 		callback(character)
 	end
 end
@@ -69,7 +71,7 @@ end
 
 if Players.LocalPlayer.Character then
 	task.spawn(function()
-		task.wait(0.8)
+		task.wait(0.4)
 		OnCharacterAdded(Players.LocalPlayer.Character)
 	end)
 end
